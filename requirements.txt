@@ -1,0 +1,10 @@
+# ContextPM dashboard - Python dependencies (Python 3.9 or newer)
+flask>=2.2
+pandas>=1.5
+numpy>=1.23
+openpyxl>=3.0
+networkx>=2.8
+pyyaml>=6.0
+# Process discovery engine (optional). The dashboard falls back to an
+# equivalent pandas implementation when pm4py is not installed.
+pm4py>=2.7

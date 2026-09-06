@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<!--
+  ContextPM - Contextualized Process Mining
+  Copyright (C) 2026 Mohsen Shirali and Zahra Ahmadi (LIRIS, KU Leuven)
+  Released under the GNU General Public License version 3 (see LICENSE).
+-->
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ContextPM Dashboard</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='8' cy='16' r='5' fill='%233b82f6'/%3E%3Ccircle cx='24' cy='8' r='4' fill='%2322c55e'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%23ef4444'/%3E%3Cpath d='M12 14 L20 9 M12 18 L20 23' stroke='%23555' stroke-width='2'/%3E%3C/svg%3E">
+</head>
+
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <span class="brand-title">ContextPM</span>
+      <span class="brand-sub">contextualized process maps</span>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-page="data">1 · Data &amp; discovery</button>
+      <button class="tab" data-page="style">2 · Process-map styling</button>
+      <button class="tab" data-page="viewer">3 · Interactive viewer</button>
+    </nav>
+    <div class="topbar-right">
+      <span class="pill" id="jobStatus">idle</span>
+      <button class="btn btn-ghost btn-sm" id="btnToggleLog" title="Show / hide the execution log">Log</button>
+      <button class="btn btn-ghost btn-sm" id="btnToggleCredits" title="About this project">Credits</button>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- ====================================================== PAGE 1 -->
+    <section class="page active" id="page-data">
+      <div class="layout-2col">
+        <div class="col">
+
+          <div class="card">
+            <h2>1. Input dataset</h2>
+            <label class="check">
+              <input type="checkbox" id="useDefaultDataset">
+              <span>Use the default dataset: <b id="defaultDatasetLabel">eSense</b> <span id="defaultDatasetInfo">(for
+                  more information refer to <a id="defaultDatasetLink" href="#" target="_blank"
+                    rel="noopener"></a>)</span></span>
+            </label>
+            <div class="row" id="pathRow">
+              <input type="text" id="datasetPath"
+                placeholder="Full path of a .xlsx / .csv file on this computer, e.g. C:\data\activities.xlsx">
+              <button class="btn" id="btnLoadPath">Load file</button>
+            </div>
+            <div class="row" id="uploadRow">
+              <input type="file" id="datasetUpload" accept=".csv,.txt,.xlsx,.xls,.parquet">
+              <button class="btn" id="btnUpload">Upload &amp; load</button>
+            </div>
+            <div class="row">
+              <label class="field"><span>Dataset name (output folder)</span><input type="text" id="datasetName"></label>
+            </div>
+            <div id="datasetInfo" class="info-box muted">No dataset loaded yet.</div>
+          </div>
+
+          <div class="card">
+            <h2>2. Columns to keep <small class="muted">(unchecked columns are dropped before the analysis)</small></h2>
+            <div class="row toolbar">
+              <button class="btn btn-sm" id="btnColsAll">Select all</button>
+              <button class="btn btn-sm" id="btnColsNone">Select none</button>
+              <button class="btn btn-sm" id="btnColsDefault">Defaults from config</button>
+              <span class="muted" id="colsCount"></span>
+            </div>
+            <div id="columnsList" class="check-grid muted">Load a dataset to see its columns.</div>
+          </div>
+
+          <div class="card">
+            <h2>3. Column roles</h2>
+            <div class="grid-2">
+              <label class="field"><span>Activity column (process-map nodes)</span><select
+                  id="colActivity"></select></label>
+              <label class="field"><span>Timestamp column (event order)</span><select
+                  id="colTimestamp"></select></label>
+              <label class="field"><span>Day column (one trace per day)</span><select id="colDay"></select></label>
+              <label class="field"><span>Case-id column</span><select id="colCase"></select></label>
+              <label class="field"><span>Duration column (hh:mm:ss)</span><select id="colDuration"></select></label>
+              <label class="field"><span>Derived duration column name</span><input type="text"
+                  id="durationOutput"></label>
+              <label class="field"><span>Start-time column (if no duration column)</span><select
+                  id="colStart"></select></label>
+              <label class="field"><span>End-time column (if no duration column)</span><select
+                  id="colEnd"></select></label>
+              <label class="field"><span>Column to standardize (split on delimiter)</span><select
+                  id="colClean"></select></label>
+              <div class="grid-2 compact">
+                <label class="field"><span>Delimiter</span><input type="text" id="cleanDelimiter"></label>
+                <label class="field"><span>Keep part</span><select id="cleanKeepPart">
+                    <option value="first">first</option>
+                    <option value="last">last</option>
+                  </select></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>4. Grouping</h2>
+            <label class="field"><span>Grouping column (one process map per value)</span><select
+                id="groupColumn"></select></label>
+            <div id="groupValues" class="check-grid muted"></div>
+            <label class="check"><input type="checkbox" id="includeOverall"><span>Discover the baseline map from all
+                rows (needed for the differential maps)</span></label>
+          </div>
+
+          <div class="card">
+            <h2>5. Row filters <small class="muted">(optional)</small></h2>
+            <div id="filtersList" class="filters muted">No filters.</div>
+            <div class="filter-builder">
+              <div class="grid-2 compact">
+                <label class="field"><span>Column</span><select id="filterColumn"></select></label>
+                <label class="field"><span>Rule</span><select id="filterMode">
+                    <option value="exclude">Exclude the selected values</option>
+                    <option value="include">Keep only the selected values</option>
+                  </select></label>
+              </div>
+              <div id="filterValues" class="check-grid muted small">Choose a column.</div>
+              <button class="btn btn-sm" id="btnAddFilter">Add filter</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>6. Analysis options</h2>
+            <div class="grid-3">
+              <label class="field"><span>Most different days per group</span><input type="number" id="topNDays" min="1"
+                  step="1"></label>
+              <label class="field"><span>Difference score</span><select id="scoreMethod">
+                  <option value="mean_abs_relative">mean_abs_relative</option>
+                  <option value="sum_abs">sum_abs</option>
+                  <option value="euclidean">euclidean</option>
+                </select></label>
+              <label class="field"><span>Weight duration / edge scores</span>
+                <div class="row compact"><input type="number" id="durationWeight" step="0.05" min="0"><input
+                    type="number" id="edgeWeight" step="0.05" min="0"></div>
+              </label>
+              <label class="field"><span>Start node label</span><input type="text" id="startLabel"></label>
+              <label class="field"><span>End node label</span><input type="text" id="endLabel"></label>
+            </div>
+          </div>
+
+          <div class="actions sticky-actions">
+            <button class="btn btn-primary btn-lg" id="btnDiscover">▶ Discover process maps</button>
+            <button class="btn" id="btnSaveDefaults1">Save current settings as defaults</button>
+            <button class="btn btn-ghost" id="btnResetDefaults">Reload defaults from config.yaml</button>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="card">
+            <h2>Discovery summary</h2>
+            <div id="discoverySummary" class="muted">Nothing discovered yet. Load a dataset and press <b>Discover
+                process maps</b>.</div>
+          </div>
+
+          <div class="card">
+            <h2>Outputs &amp; artifacts</h2>
+            <div class="row toolbar">
+              <label class="field inline"><span>Output folder</span><select id="artifactDataset"></select></label>
+              <input type="search" id="artifactFilter" placeholder="filter by name…">
+              <button class="btn btn-sm" id="btnRefreshArtifacts">Refresh</button>
+            </div>
+            <div class="chips" id="artifactCategories"></div>
+            <div class="artifact-layout">
+              <div id="artifactList" class="artifact-list muted">No outputs yet.</div>
+              <div id="artifactPreview" class="artifact-preview">
+                <div class="preview-head">
+                  <span id="previewTitle" class="muted">Select a file to preview it.</span>
+                  <span class="preview-actions">
+                    <button class="btn btn-sm" id="btnPreviewOpenViewer" hidden>Open in viewer</button>
+                    <a class="btn btn-sm" id="previewDownload" href="#" hidden download>Download</a>
+                  </span>
+                </div>
+                <div id="previewBody"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card next-step" id="nextStepData" hidden>
+            <div class="next-step-text"><b>Discovery finished.</b> The process maps have been created. In the next step
+              you choose the node colours, the labels, the nodes to display and the map options.</div>
+            <button class="btn btn-primary" id="btnGoStyle">Continue to 2 · Process-map styling →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================== PAGE 2 -->
+    <section class="page" id="page-style">
+      <div class="layout-2col">
+        <div class="col">
+
+          <div class="card">
+            <h2>Node colours &amp; visibility <small class="muted">(baseline and group maps)</small></h2>
+            <p class="hint">Tick one or more nodes, then click a colour in the palette (or pick a custom colour) to
+              assign it. The switch at the end of each row shows or hides the node in every process map. Differential
+              maps ignore the colours: their node and edge colours encode the difference values.</p>
+            <div class="row toolbar">
+              <div class="palette" id="palette"></div>
+              <label class="field inline"><span>Custom</span><input type="color" id="customColor"
+                  value="#3b82f6"></label>
+              <button class="btn btn-sm" id="btnApplyCustomColor">Assign custom colour</button>
+            </div>
+            <div class="row toolbar">
+              <input type="search" id="nodeFilter" placeholder="filter nodes…">
+              <button class="btn btn-sm" id="btnNodesAll">Select all</button>
+              <button class="btn btn-sm" id="btnNodesNone">Select none</button>
+              <button class="btn btn-sm" id="btnNodesFiltered">Select filtered</button>
+              <button class="btn btn-sm btn-ghost" id="btnResetColors">Reset colours to defaults</button>
+            </div>
+            <div class="row toolbar">
+              <span class="muted small" id="hiddenCount">All nodes are displayed.</span>
+              <button class="btn btn-sm btn-ghost" id="btnNodesShowAll">Show all nodes</button>
+            </div>
+            <div class="node-list-head"><span></span><span></span><span>Node</span><span>Colour rule</span><span>Avg /
+                day</span><span>Displayed</span></div>
+            <div id="nodeColorList" class="node-list muted">Run the discovery first to see the nodes of the process
+              maps.</div>
+            <details class="sub">
+              <summary>Default rules</summary>
+              <div id="colorRules" class="muted small"></div>
+            </details>
+          </div>
+
+          <div class="card">
+            <h2>Node labels</h2>
+            <p class="hint">The label shown in the maps. Leave a label equal to the node name to keep it unchanged.
+              Hidden nodes are not listed.</p>
+            <label class="check"><input type="checkbox" id="addMetricText"><span>Append the average duration per day to
+                the label (e.g. <i>Sleeping 7h30m</i>)</span></label>
+            <div class="row toolbar"><button class="btn btn-sm btn-ghost" id="btnResetLabels">Reset labels to
+                defaults</button></div>
+            <div id="nodeLabelList" class="node-list muted">Run the discovery first.</div>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="card">
+            <h2>Process-map options</h2>
+            <div class="grid-2">
+              <label class="field"><span>Edge threshold (strongest edges kept per node)</span>
+                <div class="row compact"><input type="number" id="edgeThreshold" min="1" step="1"><label
+                    class="check compact"><input type="checkbox" id="noThreshold"><span>no threshold (full
+                      topology)</span></label></div>
+              </label>
+              <label class="check"><input type="checkbox" id="keepSelfLoops"><span>Keep self-loops (A →
+                  A)</span></label>
+              <label class="check"><input type="checkbox" id="exportGexf"><span>Also export GEXF files
+                  (Gephi)</span></label>
+              <label class="check"><input type="checkbox" id="exportDayGraphs"><span>Export one map per day (day vs.
+                  group baseline)</span></label>
+              <label class="check"><input type="checkbox" id="exportCsvDays"><span>Nodes / edges CSV tables next to the
+                  day maps</span></label>
+            </div>
+            <h3>Node sizes</h3>
+            <div class="grid-2">
+              <label class="field"><span>Duration mapped to the smallest node (s)</span><input type="number"
+                  id="sizeSourceMin" step="1"></label>
+              <label class="field"><span>Duration mapped to the largest node (s)</span><input type="number"
+                  id="sizeSourceMax" step="1"></label>
+              <label class="field"><span>Smallest node size (Gephi units)</span><input type="number" id="sizeTargetMin"
+                  step="1"></label>
+              <label class="field"><span>Largest node size (Gephi units)</span><input type="number" id="sizeTargetMax"
+                  step="1"></label>
+              <label class="field"><span>Start / End node size</span><input type="number" id="startEndSize"
+                  step="1"></label>
+              <label class="field"><span>Minimum edge weight (Gephi)</span><input type="number" id="minEdgeWeight"
+                  step="0.001"></label>
+            </div>
+            <h3>Automatic layout</h3>
+            <div class="grid-2">
+              <label class="field"><span>Horizontal gap between layers</span><input type="number" id="layoutXGap"
+                  step="10"></label>
+              <label class="field"><span>Vertical gap between nodes</span><input type="number" id="layoutYGap"
+                  step="10"></label>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Differential colour scale <small class="muted">(fixed)</small></h2>
+            <p class="hint">Differential maps (group vs. overall, day vs. group) colour nodes and edges by their
+              difference value. These colours are fixed in the viewer and can only be changed in
+              <code>config.yaml</code>.</p>
+            <div id="diffScaleInfo" class="diff-scale"></div>
+            <div class="grid-2" style="margin-top:10px">
+              <label class="field"><span>Node near-zero band (% of the largest difference shown grey)</span><input
+                  type="number" id="nodeNearZero" min="0" max="100" step="1"></label>
+              <label class="field"><span>Edge near-zero band (%)</span><input type="number" id="edgeNearZero" min="0"
+                  max="100" step="1"></label>
+            </div>
+          </div>
+
+          <div class="actions sticky-actions">
+            <button class="btn btn-primary btn-lg" id="btnBuild">▶ Run: build the graph files</button>
+            <button class="btn" id="btnSaveDefaults2">Save current settings as defaults</button>
+          </div>
+
+          <div class="card">
+            <h2>Generated process maps</h2>
+            <div id="buildSummary" class="muted">No graphs built yet.</div>
+          </div>
+
+          <div class="card next-step" id="nextStepStyle" hidden>
+            <div class="next-step-text"><b>Graph files are ready.</b> Open the interactive viewer to explore, restyle
+              and save the process maps as figures.</div>
+            <button class="btn btn-primary" id="btnGoViewer">Continue to 3 · Interactive viewer →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================== PAGE 3 -->
+    <section class="page" id="page-viewer">
+      <div class="viewer-toolbar">
+        <label class="field inline grow"><span>Graph</span><select id="graphSelect">
+            <option value="">— select a graph —</option>
+          </select></label>
+        <button class="btn btn-sm" id="btnReloadGraphs" title="Reload the list of graphs">↻</button>
+        <label class="field inline"><span>Layout</span>
+          <select id="layoutSelect">
+            <option value="preset">Original (from file)</option>
+            <option value="breadthfirst">Layered (breadth-first)</option>
+            <option value="cose">Force-directed</option>
+            <option value="circle">Circle</option>
+            <option value="concentric">Concentric</option>
+            <option value="grid">Grid</option>
+          </select>
+        </label>
+        <button class="btn btn-sm" id="btnApplyLayout">Apply layout</button>
+        <button class="btn btn-sm" id="btnFit">Fit</button>
+        <label class="check compact"><input type="checkbox" id="showLegend" checked><span>Legend</span></label>
+        <label class="check compact"><input type="checkbox" id="showEdgeLabels"><span>Edge values</span></label>
+        <label class="check compact"><input type="checkbox" id="showArrows" checked><span>Arrows</span></label>
+        <span class="spacer"></span>
+        <button class="btn btn-sm" id="btnResetGraph" title="Discard the changes and reload the graph">Reset</button>
+        <button class="btn btn-sm" id="btnSaveGraph"
+          title="Write the current positions and colours to GraphML / GEXF">Save layout &amp; style</button>
+        <button class="btn btn-primary btn-sm" id="btnSaveFigure">Save figure (PNG)</button>
+      </div>
+
+      <div class="viewer-layout">
+        <div class="viewer-canvas-wrap">
+          <div id="cy"></div>
+          <canvas id="legendCanvas" class="legend-canvas"></canvas>
+          <div id="viewerMessage" class="viewer-message">Select a graph from the list above.</div>
+          <div class="viewer-help">drag nodes to move them · shift+drag to box-select · scroll to zoom · drag the
+            background to pan</div>
+        </div>
+
+        <aside class="viewer-panel" id="viewerPanel">
+          <div class="panel-section">
+            <h3>Graph</h3>
+            <div id="graphInfo" class="muted small">-</div>
+          </div>
+          <div class="panel-section">
+            <h3>Selection</h3>
+            <div id="selectionInfo" class="muted small">Nothing selected.</div>
+            <div id="lockedNote" class="note" hidden>Colours of this map encode the differential values and cannot be
+              changed.</div>
+            <div id="colorControls">
+              <div class="label">Node colour</div>
+              <div class="palette" id="viewerPalette"></div>
+              <div class="row compact">
+                <input type="color" id="viewerCustomColor" value="#3b82f6">
+                <button class="btn btn-sm" id="btnViewerApplyNodeColor">Apply to selected nodes</button>
+              </div>
+              <div class="label">Edge colour</div>
+              <div class="row compact">
+                <input type="color" id="viewerEdgeColor" value="#808080">
+                <button class="btn btn-sm" id="btnViewerApplyEdgeColor">Apply to selected edges</button>
+              </div>
+            </div>
+            <div class="label">Edge thickness (px)</div>
+            <div class="row compact">
+              <input type="number" id="viewerEdgeWidth" min="0.5" max="40" step="0.5" value="3">
+              <button class="btn btn-sm" id="btnViewerApplyEdgeWidth">Apply to selected edges</button>
+            </div>
+            <div class="row compact">
+              <button class="btn btn-sm btn-ghost" id="btnSelectAllEdges">Select all edges</button>
+              <button class="btn btn-sm btn-ghost" id="btnSelectAllNodes">Select all nodes</button>
+            </div>
+          </div>
+          <div class="panel-section">
+            <h3>Display</h3>
+            <label class="slider"><span>Node size scale <b id="nodeScaleVal">1.0</b></span><input type="range"
+                id="nodeScale" min="0.2" max="3" step="0.1" value="1"></label>
+            <label class="slider"><span>Edge thickness scale <b id="edgeScaleVal">1.0</b></span><input type="range"
+                id="edgeScale" min="0.2" max="4" step="0.1" value="1"></label>
+            <label class="slider"><span>Label size <b id="fontSizeVal">12</b></span><input type="range" id="fontSize"
+                min="6" max="30" step="1" value="12"></label>
+            <label class="field"><span>Label position</span><select id="labelPosition">
+                <option value="bottom">below the node</option>
+                <option value="center">inside the node</option>
+                <option value="top">above the node</option>
+              </select></label>
+            <label class="check compact"><input type="checkbox" id="curvedEdges" checked><span>Curved
+                edges</span></label>
+            <label class="field inline"><span>Background</span><input type="color" id="bgColor" value="#ffffff"></label>
+          </div>
+          <div class="panel-section">
+            <h3>Details</h3>
+            <div id="elementDetails" class="muted small">Click a node or an edge to see its values.</div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ====================================================== LOG PANEL -->
+  <section class="log-panel" id="logPanel">
+    <div class="log-head">
+      <span>Execution log</span>
+      <span class="spacer"></span>
+      <label class="check compact"><input type="checkbox" id="autoScroll" checked><span>auto-scroll</span></label>
+      <button class="btn btn-sm btn-ghost" id="btnClearLog">Clear</button>
+      <button class="btn btn-sm btn-ghost" id="btnCloseLog">✕</button>
+    </div>
+    <pre id="logBody" class="log-body"></pre>
+  </section>
+
+  <!-- ====================================================== CREDITS PANEL -->
+  <aside class="credits-panel" id="creditsPanel" hidden>
+    <div class="credits-head">
+      <span>Credits</span>
+      <span class="spacer"></span>
+      <button class="btn btn-sm btn-ghost" id="btnCloseCredits">✕</button>
+    </div>
+    <div class="credits-body">
+      <h3>Contextualized Process Mining (ContextPM)</h3>
+      <p>ContextPM is developed by <b>Mohsen Shirali</b> and <b>Zahra Ahmadi</b> under the supervision of Prof.
+        <b>Estefanía Serral</b> and Prof. <b>Jochen De Weerdt</b> at the Research Centre for Information Systems
+        Engineering (LIRIS), KU Leuven.</p>
+      <p>The contextualized process-mining algorithm and the core analysis code were designed and developed by the
+        authors. The web dashboard was prepared with the assistance of Claude (Anthropic).</p>
+      <p>The project is developed as part of the HB-UniContext approach proposed in:</p>
+      <p class="cite">Ahmadi, Z., Shirali, M., De Weerdt, J., Serral, E. (2026). Context-Enriched Process Discovery from
+        IoT Data Sources for Human Behavioral Monitoring. In: Fill, HG., Wautelet, Y., Ralyté, J., Zdravkovic, J. (eds)
+        The Practice of Enterprise Modeling. PoEM 2025. Lecture Notes in Business Information Processing, vol 570.
+        Springer, Cham. <a href="https://doi.org/10.1007/978-3-032-12063-2_14" target="_blank"
+          rel="noopener">https://doi.org/10.1007/978-3-032-12063-2_14</a></p>
+      <p>ContextPM is open source, released under the <a href="https://www.gnu.org/licenses/gpl-3.0.html"
+          target="_blank" rel="noopener">GNU General Public License v3.0</a>. If you use it in your research or work, we
+        appreciate an acknowledgement and a citation of the paper above.</p>
+    </div>
+  </aside>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="/static/vendor/cytoscape.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+
+</html>

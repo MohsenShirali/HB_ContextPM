@@ -1,0 +1,163 @@
+# =============================================================================
+# ContextPM dashboard - default configuration
+#
+# Every value here is a DEFAULT. The web dashboard reads this file when it
+# starts and pre-fills its forms with these values. Everything can be changed in
+# the browser; "Save current settings as defaults" writes the changes back here.
+#
+# Paths are relative to the project folder (the folder containing this file).
+# =============================================================================
+
+server:
+  host: 127.0.0.1        # use 0.0.0.0 to reach the dashboard from other PCs on your network
+  port: 8050
+  debug: false
+
+paths:
+  default_dataset: data/eSense-2ndDataset-Raw_and_Events-Contextualized-Final.xlsx
+  default_dataset_label: eSense
+  default_dataset_info_url: https://zenodo.org/records/10223646   # shown next to the default-dataset checkbox
+  outputs_dir: outputs   # every run writes to <outputs_dir>/<dataset_name>/
+  uploads_dir: data/uploads
+
+# -----------------------------------------------------------------------------
+# Page 1 - data preparation, filtering, grouping and KPI options
+# -----------------------------------------------------------------------------
+data:
+  dataset_name: eSense                       # name of the output folder
+  activity_column: Contextualized_Activity   # activity used for the process maps and KPIs
+  timestamp_column: StartTime                # event ordering inside a case
+  day_column: Date                           # one "day" = one trace/case (null -> derived from timestamp)
+  case_id_column: null                       # null -> the day column is used as the case id
+  duration_column: Duration                  # hh:mm:ss column; null -> derived from start/end columns
+  start_column: StartTime
+  end_column: EndTime
+  duration_output_column: duration_seconds   # derived numeric duration column (always kept)
+  activity_column_to_clean: Activity         # split this column on the delimiter and keep one part (null -> skip)
+  clean_delimiter: " - "
+  clean_keep_part: first                     # first | last
+  columns_to_keep:                           # columns pre-selected in the dashboard
+    - Date
+    - Location
+    - StartTime
+    - EndTime
+    - Duration
+    - Activity
+    - Contextualized_Activity
+    - Stress Level
+    - duration_seconds
+  group_column: Stress Level                 # one process map per value of this column
+  group_values: null                         # null -> all values, or a list of the values to process
+  include_overall_baseline: true             # discover the baseline map from all rows
+  filters: []                                # row filters, e.g. {column: Activity, mode: exclude, values: [Doing chores]}
+
+analysis:
+  start_label: Start
+  end_label: End
+  top_n_outlier_days: 2                      # most different days per group
+  score_method: mean_abs_relative            # mean_abs_relative | sum_abs | euclidean
+  duration_score_weight: 0.7
+  edge_score_weight: 0.3
+  # Manual overrides of the group duration baselines (seconds) - the original
+  # notebook hard-coded these for the "Sad" and "Happy" groups of the FR data.
+  duration_baseline_overrides:
+    Sad:
+      Sleeping - Night - Poor: 24070.0
+      Using Phone - Entertainment: 3300.0
+      Using Phone - Call & Msg: 2220.0
+      Sitting: 960.0
+      Praying: 9240.0
+      Watching TV: 12300.0
+    Happy:
+      Sleeping - Night - Poor: 22019.0
+      Using Phone - Entertainment: 3420.0
+      Using Phone - Call & Msg: 1620.0
+      Using Phone - Others: 720.0
+
+# -----------------------------------------------------------------------------
+# Page 2 - process-map construction options
+# -----------------------------------------------------------------------------
+graph:
+  edge_threshold: 5                # keep the N strongest edges around each node; null -> full topology
+  keep_self_loops: true
+  export_gexf: true                # Gephi-friendly export next to every GraphML
+  export_day_graphs: true          # one graph per day and group (day vs. group baseline)
+  export_csv_for_days: true        # nodes/edges CSV tables next to every day graph
+  add_metric_text_to_labels: true  # "Sleeping 7h30m" instead of "Sleeping"
+  node_size_source_min: 0          # seconds mapped to the smallest node
+  node_size_source_max: 86400      # seconds mapped to the largest node (24 h)
+  node_size_target_min: 50         # Gephi node size range
+  node_size_target_max: 1000
+  start_end_node_size: 100
+  min_edge_weight: 0.001           # Gephi cannot draw zero-weight edges
+  layout_x_gap: 620                # layered layout spacing
+  layout_y_gap: 240
+
+# -----------------------------------------------------------------------------
+# Page 2 - node colours and labels (baseline and per-group maps only)
+# -----------------------------------------------------------------------------
+style:
+  node_colors:
+    default: "#A3A3A3"
+    default_border: "#ffffff"
+    start_end: "#d9d9d9"
+    keyword_rules:                 # applied when the node name contains the keyword (case-insensitive)
+      - {keyword: sleeping, color: "#73A7F0"}
+      - {keyword: hygiening, color: "#FFAD2B"}
+      - {keyword: using phone, color: "#f2ff26"}
+      - {keyword: eating, color: "#6f3499"}
+    explicit: {}                   # exact node name -> colour, wins over the keyword rules
+  hidden_nodes: []                 # activities switched off on page 2 (left out of every process map)
+  node_labels:                     # node name -> label shown in the process maps
+    Sleeping - Night - Good: S-Night-Good
+    Sleeping - Night - Poor: S-Night-Poor
+    Sleeping - Night - Unavailable: S-Night-N/A
+    Sleeping - Day - Good: S-Day-Good
+    Sleeping - Day - Poor: S-Day-Poor
+    Sleeping - Day - Unavailable: S-Day-N/A
+    Eating - Breakfast - Normal: E-Breakfast-Normal
+    Eating - Breakfast - Short: E-Breakfast-Short
+    Eating - Lunch - Normal: E-Lunch-Normal
+    Eating - Lunch - Short: E-Lunch-Short
+    Eating - Dinner - Normal: E-Dinner-Normal
+    Eating - Dinner - Short: E-Dinner-Short
+    Using Phone - Call & Msg: U-Call & Msg
+    Using Phone - Others: U-Others
+    Using Phone - Entertainment: U-Entertainment
+    Hygiening - Normal: H-Normal
+    Hygiening - MidSleep: H-MidSleep
+  palette:                         # quick-pick colours offered in the dashboard
+    - {name: Blue, hex: "#3B82F6"}
+    - {name: Light blue, hex: "#73A7F0"}
+    - {name: Green, hex: "#22C55E"}
+    - {name: Dark green, hex: "#006400"}
+    - {name: Yellow, hex: "#FACC15"}
+    - {name: Orange, hex: "#F97316"}
+    - {name: Red, hex: "#EF4444"}
+    - {name: Purple, hex: "#A855F7"}
+    - {name: Pink, hex: "#EC4899"}
+    - {name: Teal, hex: "#14B8A6"}
+    - {name: Brown, hex: "#A16207"}
+    - {name: Grey, hex: "#A3A3A3"}
+  # Differential maps (group vs. overall, day vs. group) always use this scale.
+  # These colours are fixed in the interactive viewer; change them only here.
+  differential:
+    negative_color: "#ff0000"      # below baseline
+    zero_color: "#a3a3a3"          # close to baseline
+    positive_color: "#006400"      # above baseline
+    node_near_zero_ratio: 0.05     # |difference| below 5 % of the maximum -> zero colour
+    edge_near_zero_ratio: 0.05
+    node_border_color: "#000000"
+    day_edge_zero_color: "#808080" # zero colour of the edges in the per-day maps (notebook default)
+  simple_edge_color: "#808080"     # edge colour in the baseline / group maps
+
+# -----------------------------------------------------------------------------
+# Page 3 - interactive viewer defaults
+# -----------------------------------------------------------------------------
+viewer:
+  node_diameter_px: [28, 130]      # Gephi size range is mapped onto this pixel range
+  edge_width_px: [1.0, 10.0]
+  label_font_size: 12
+  show_legend: true
+  show_edge_labels: false
+  background: "#ffffff"

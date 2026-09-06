@@ -1,0 +1,34 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Environments & IDE
+.env
+.venv/
+env/
+venv/
+.vscode/
+.idea/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Data and generated outputs
+data/*
+!data/eSense-2ndDataset-Raw_and_Events-Contextualized-Final.xlsx
+outputs/
+
+# Dashboard-generated files
+config.yaml.bak
+data/uploads/
+
+# Ignore prompt text file
+promp for code-ContextualizedPM.txt
+
