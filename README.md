@@ -1,12 +1,12 @@
-# ContextPM – Contextualized Process Mining
+# HB_ContextPM – Human Behavior Contextualized Process Mining
 
-> **Contextualized Process Mining (ContextPM)**
+> **Human Behavior Contextualized Process Mining (HB_ContextPM)**
 >
-> ContextPM is developed by **Mohsen Shirali** and **Zahra Ahmadi** under the
+> HB_ContextPM is developed by **Mohsen Shirali** and **Zahra Ahmadi** under the
 > supervision of Prof. **Estefanía Serral** and Prof. **Jochen De Weerdt** at the
 > Research Centre for Information Systems Engineering (LIRIS), KU Leuven.
 >
-> The contextualized process-mining algorithm and the core analysis code were
+> The human behavior contextualized process mining algorithm and the core analysis code were
 > designed and developed by the authors. The web dashboard was prepared with the
 > assistance of Claude (Anthropic).
 >
@@ -19,13 +19,13 @@
 > Processing, vol 570. Springer, Cham.
 > https://doi.org/10.1007/978-3-032-12063-2_14
 >
-> ContextPM is open source, released under the GNU General Public License
+> HB_ContextPM is open source, released under the GNU General Public License
 > v3.0 (see [LICENSE](LICENSE)). If you use it in your research or work, we
 > appreciate an acknowledgement and a citation of the paper above.
 
 ---
 
-ContextPM turns a daily-activity log (for example the
+HB_ContextPM turns a daily-activity log (for example, the
 [eSense dataset](https://zenodo.org/records/10223646)) into **process maps**:
 a *baseline* map discovered from all rows, one map per *group* (e.g.
 `Stressful` / `Normal` days), *differential* maps that colour every node and
@@ -49,7 +49,7 @@ browser (Chrome, Edge, Firefox, Safari).
 
 ```bash
 # 1. get the code (or unzip the project folder)
-cd ContextPM
+cd HB_ContextPM
 
 # 2. (recommended) create a virtual environment
 python -m venv .venv
