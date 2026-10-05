@@ -120,6 +120,8 @@ the **Credits** button shows the project credits on every page.
    day-difference score and its weights, and the labels of the artificial
    Start/End nodes.
 
+Note: The config.yaml file includes config for both data sample files (eSense and DAMMI). This file contains the correct column names and columns that should be used in the analysis, but the active configuration is related to the eSense data sample, and config lines for the DAMMI sample are commented out. To run the DAMMI sample, the lines for eSense should be commented out, and lines for DAMMI should be used. The config file can be loaded in the dashboard. 
+
 Press **▶ Discover process maps**. The job runs in the background; the log
 panel shows the progress. When it finishes:
 
